@@ -358,7 +358,7 @@ https://github.com/rongalidhanush
 
 LinkedIn
 
-(Add your LinkedIn profile here)
+https://www.linkedin.com/in/dhanushrongali
 
 ---
 
