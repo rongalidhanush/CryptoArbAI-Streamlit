@@ -1,103 +1,364 @@
-# CryptoArb AI
+# 🚀 CryptoArbAI
 
-CryptoArb AI is a Python + Streamlit cryptocurrency arbitrage dashboard. It
-fetches live public prices from CoinGecko, Binance, CoinCap, and Kraken; compares
-the returned quotes using the existing fee-aware arbitrage engine; persists user
-accounts, portfolios, and saved trade records with SQLAlchemy; and provides
-optional Gemini commentary.
+> **An AI-powered cryptocurrency arbitrage detection platform that combines real-time market analysis, portfolio management, sentiment analysis, and intelligent trading insights using Google Gemini AI.**
 
-No HTML, CSS, JavaScript, Node.js, npm, or frontend build tool is maintained in
-this repository. The dashboard uses Streamlit layouts, widgets, tables, metrics,
-forms, and charts directly from Python.
+<p align="center">
 
-## Features
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.38+-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
 
-- Live market overview with source and timestamp visibility
-- Fee-aware cross-exchange arbitrage scanner
-- Persistent per-user watchlists, saved trade history, and portfolio holdings
-- Live portfolio valuation and native Streamlit charts
-- Historical-price forecast interface (LSTM when a local model is available,
-  otherwise the existing momentum model)
-- Live RSS news sentiment and optional Gemini explanations
-- Local SQLite by default; PostgreSQL supported through `DATABASE_URL`
+</p>
 
-CryptoArb AI does not execute trades and is for education and analysis only.
+<p align="center">
 
-## Project structure
+### 🌐 Live Demo
 
-```text
-CryptoArbAI/
-  app.py                 # Streamlit entry point
-  config.py              # Environment and Streamlit-secrets settings
-  api/                   # Live public exchange API clients
-  arbitrage/             # Preserved fee and profit calculations
-  database/              # SQLAlchemy schema and session setup
-  graphs/                # Python chart-data builders for Streamlit
-  llm/                   # Gemini natural-language integration
-  ml/                    # Existing LSTM/momentum prediction logic
-  sentiment/             # RSS fetch and sentiment analysis
-  utils/                 # Account and portfolio helpers
-  tests/                 # Offline unit tests
-  .streamlit/config.toml # Native Streamlit theme configuration
+### **https://cryptoarbai-v1-1.onrender.com**
+
+Experience the application live without any installation.
+
+</p>
+
+---
+
+# 📌 Overview
+
+CryptoArbAI is a comprehensive cryptocurrency analytics platform designed to help traders identify profitable arbitrage opportunities across multiple cryptocurrency exchanges.
+
+The application continuously monitors live market prices, compares exchange spreads, evaluates trading opportunities after fees, performs market sentiment analysis, and generates AI-powered market insights using **Google Gemini AI**.
+
+Whether you're an active trader or a crypto enthusiast, CryptoArbAI provides an intuitive dashboard for monitoring market trends and making data-driven trading decisions.
+
+---
+
+# ✨ Features
+
+## 💹 Real-Time Arbitrage Detection
+
+- Live cryptocurrency price monitoring
+- Cross-exchange price comparison
+- Arbitrage opportunity detection
+- Profit estimation after trading fees
+- Multi-exchange support
+
+---
+
+## 📊 Portfolio Management
+
+- Portfolio tracking
+- Trade history
+- Watchlist management
+- Investment performance analytics
+- Portfolio overview dashboard
+
+---
+
+## 🤖 AI Market Advisor
+
+Powered by **Google Gemini AI**
+
+- Market trend explanations
+- AI-generated trading insights
+- Market summaries
+- Intelligent recommendations
+- Cryptocurrency analysis
+
+---
+
+## 📰 Sentiment Analysis
+
+- Cryptocurrency news aggregation
+- News sentiment analysis
+- Market confidence indicators
+- AI-assisted market interpretation
+
+---
+
+## 📈 Interactive Analytics
+
+- Live market charts
+- Historical price visualization
+- Interactive dashboards
+- Performance graphs
+- Price movement analysis
+
+---
+
+## 🔒 Authentication
+
+- Secure user registration
+- Login system
+- Password hashing using Werkzeug
+- Session management
+
+---
+
+# 🏗 Project Structure
+
+```
+CryptoArbAI
+│
+├── api/                 # Exchange API integrations
+├── arbitrage/           # Arbitrage engine
+├── database/            # SQLAlchemy models
+├── graphs/              # Visualization utilities
+├── llm/                 # Gemini AI integration
+├── ml/                  # Machine learning modules
+├── sentiment/           # Sentiment analysis
+├── static/              # Static assets
+├── templates/           # HTML templates
+├── tests/               # Unit tests
+├── utils/               # Utility functions
+│
+├── app.py               # Main Streamlit application
+├── config.py            # Application configuration
+├── requirements.txt
+└── README.md
 ```
 
-## Local setup
+---
 
-```powershell
+# 🛠 Tech Stack
+
+### Frontend
+
+- Streamlit
+
+### Backend
+
+- Python
+- SQLAlchemy
+- SQLite / PostgreSQL
+
+### AI
+
+- Google Gemini AI
+
+### Data Processing
+
+- Pandas
+- NumPy
+
+### APIs
+
+- CoinGecko
+- Binance
+- Kraken
+- CoinCap
+
+### Visualization
+
+- Plotly
+- Streamlit Charts
+
+---
+
+# ⚡ Installation
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/rongalidhanush/CryptoArbAI-Streamlit.git
+
+cd CryptoArbAI-Streamlit
+```
+
+---
+
+## Create Virtual Environment
+
+```bash
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-Copy-Item .env.example .env
-streamlit run app.py
 ```
 
-Open the URL displayed by Streamlit, register an account, and use the sidebar to
-navigate. Add `GEMINI_API_KEY` to `.env` only if Gemini commentary is desired.
+---
 
-## Configuration and secrets
+## Activate Virtual Environment
 
-Copy `.env.example` to `.env` for local development. Streamlit deployments can
-instead use `.streamlit/secrets.toml` or the host's secret manager with the same
-keys. Never commit either `.env` or `secrets.toml`.
+### Windows
 
-```text
+```bash
+.venv\Scripts\activate
+```
+
+### Linux/macOS
+
+```bash
+source .venv/bin/activate
+```
+
+---
+
+## Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+# 🔑 Environment Variables
+
+Create a **.env** file in the project root.
+
+```env
 DATABASE_URL=sqlite:///database/database.db
-GEMINI_API_KEY=
+
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+
 API_TIMEOUT_SECONDS=8
+
 MARKET_CACHE_TTL_SECONDS=30
+
 MARKET_REFRESH_INTERVAL_SECONDS=30
 ```
 
-`DATABASE_URL` accepts a PostgreSQL URL in production. Existing `postgres://`
-URLs are normalized automatically for SQLAlchemy. User accounts, portfolios,
-watchlists, and saved trades are committed to this database; only the temporary
-signed-in browser indicator uses Streamlit session state.
+---
 
-## Deployment
+# ▶ Run Locally
 
-Deploy with a Streamlit-compatible service such as Streamlit Community Cloud or
-Render. Configure:
-
-```text
-Build command: pip install -r requirements.txt
-Start command: streamlit run app.py --server.address 0.0.0.0 --server.port $PORT
+```bash
+streamlit run app.py
 ```
 
-On Streamlit Community Cloud, set `app.py` as the entry point and provide secrets
-through its secret configuration. Set `DATABASE_URL` to a managed PostgreSQL
-database in deployment: local SQLite files are ephemeral on services without a
-persistent disk and cannot guarantee that accounts or watchlists survive a
-redeploy.
+Application runs at
 
-## Feature map
+```
+http://localhost:8501
+```
 
-See [docs/feature_model_map.md](docs/feature_model_map.md) for the modules and
-live sources behind each feature.
+---
 
-## Live-data behavior
+# ☁ Deployment
 
-The dashboard does not substitute static prices, arbitrary opportunities, or
-offline news when a service fails. It reports the affected live-source failure in
-the UI, logs request failures in the Python services, and lets the user refresh.
-The API client TTL cache and Streamlit data cache reduce avoidable rate-limit
-pressure without turning live data into mock data.
+## Render
+
+### Build Command
+
+```bash
+pip install -r requirements.txt
+```
+
+### Start Command
+
+```bash
+streamlit run app.py --server.address=0.0.0.0 --server.port=$PORT
+```
+
+---
+
+# 📸 Screenshots
+
+Add screenshots inside a **screenshots/** folder.
+
+Example:
+
+```
+screenshots/
+    dashboard.png
+    arbitrage.png
+    portfolio.png
+    sentiment.png
+```
+
+Then include them here.
+
+```markdown
+![Dashboard](screenshots/dashboard.png)
+
+![Arbitrage](screenshots/arbitrage.png)
+
+![Portfolio](screenshots/portfolio.png)
+```
+
+---
+
+# Supported Exchanges
+
+- ✅ Binance
+- ✅ Kraken
+- ✅ CoinGecko
+- ✅ CoinCap
+
+---
+
+# Future Enhancements
+
+- WebSocket live market updates
+- Automated arbitrage execution
+- Telegram alerts
+- Email notifications
+- Mobile responsive interface
+- Docker support
+- Kubernetes deployment
+- Advanced ML price forecasting
+- More exchange integrations
+- Dark/Light themes
+
+---
+
+# Why CryptoArbAI?
+
+✔ Real-time cryptocurrency monitoring
+
+✔ AI-powered market insights
+
+✔ Portfolio tracking
+
+✔ Arbitrage opportunity detection
+
+✔ Sentiment analysis
+
+✔ Interactive dashboards
+
+✔ Clean Streamlit interface
+
+✔ Modular architecture
+
+---
+
+# Contributing
+
+Contributions are always welcome.
+
+1. Fork the repository
+
+2. Create a new feature branch
+
+```bash
+git checkout -b feature-name
+```
+
+3. Commit your changes
+
+```bash
+git commit -m "Added new feature"
+```
+
+4. Push to GitHub
+
+```bash
+git push origin feature-name
+```
+
+5. Open a Pull Request
+
+---
+
+# Author
+
+**Dhanush Rongali**
+
+GitHub
+
+https://github.com/rongalidhanush
+
+LinkedIn
+
+(Add your LinkedIn profile here)
+https://www.linkedin.com/in/dhanushrongali
+
+---
