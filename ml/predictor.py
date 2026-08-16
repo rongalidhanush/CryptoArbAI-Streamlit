@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
+import logging
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 from statistics import mean
 
 from api.base import APIClientError
-from api.coingecko import CoinGeckoClient
-from api.market_data import fetch_exchange_prices
+from api.market_data import fetch_exchange_prices, fetch_historical_prices
+from api.types import HistoricalPrice
 from ml.lstm import load_model
 from ml.preprocessing import clean_prices
-from config import get_settings
 
 
 HORIZON_FACTORS = {
@@ -18,6 +19,14 @@ HORIZON_FACTORS = {
     "1h": 1.0,
     "24h": 24.0,
 }
+
+HORIZON_DELTAS = {
+    "15m": timedelta(minutes=15),
+    "1h": timedelta(hours=1),
+    "24h": timedelta(hours=24),
+}
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -32,6 +41,10 @@ class PredictionResult:
     confidence: float
     method: str
     history: list[float]
+    history_points: list[HistoricalPrice]
+    historical_source: str
+    generated_at: datetime
+    prediction_timestamp: datetime
 
     @property
     def formatted_current_price(self) -> str:
@@ -49,12 +62,27 @@ def predict_price(symbol: str = "BTC", horizon: str = "1h") -> PredictionResult:
     normalized_symbol = symbol.upper()
     normalized_horizon = horizon if horizon in HORIZON_FACTORS else "1h"
     current_price = _current_price(normalized_symbol)
-    history = _historical_prices(normalized_symbol, current_price)
-    model = load_model(normalized_symbol)
+    history_points, historical_source = _historical_prices(normalized_symbol)
+    history = clean_prices([point.price_usd for point in history_points])
+    if len(history) < 24:
+        raise APIClientError(
+            f"Historical live data for {normalized_symbol} has fewer than 24 valid points."
+        )
+    history_points = history_points[-len(history):]
+    model = _load_model(normalized_symbol)
 
     if model:
-        predicted_price = _predict_with_lstm(model, history)
-        method = "LSTM"
+        try:
+            predicted_price = _predict_with_lstm(model, history)
+            method = "LSTM"
+        except Exception as exc:  # Model files can become incompatible after upgrades.
+            LOGGER.exception("LSTM prediction failed for %s: %s", normalized_symbol, exc)
+            predicted_price = _predict_with_momentum(
+                history,
+                current_price,
+                HORIZON_FACTORS[normalized_horizon],
+            )
+            method = "Momentum fallback (LSTM unavailable)"
     else:
         predicted_price = _predict_with_momentum(
             history,
@@ -65,6 +93,7 @@ def predict_price(symbol: str = "BTC", horizon: str = "1h") -> PredictionResult:
 
     trend = _trend(current_price, predicted_price)
     confidence = _confidence(history, current_price, predicted_price, method)
+    generated_at = datetime.now(timezone.utc)
     return PredictionResult(
         symbol=normalized_symbol,
         horizon=normalized_horizon,
@@ -73,7 +102,11 @@ def predict_price(symbol: str = "BTC", horizon: str = "1h") -> PredictionResult:
         trend=trend,
         confidence=confidence,
         method=method,
-        history=history[-24:],
+        history=history[-48:],
+        history_points=history_points[-48:],
+        historical_source=historical_source,
+        generated_at=generated_at,
+        prediction_timestamp=generated_at + HORIZON_DELTAS[normalized_horizon],
     )
 
 
@@ -90,21 +123,22 @@ def _current_price(symbol: str) -> float:
     return mean(quotes)
 
 
-def _historical_prices(symbol: str, current_price: float) -> list[float]:
-    """Return historical prices from CoinGecko or a deterministic fallback."""
-    settings = get_settings()
-    timeout = settings.api_timeout_seconds
-    cache_ttl = settings.market_cache_ttl_seconds
-    client = CoinGeckoClient(settings.coingecko_base_url, timeout, cache_ttl)
+def _historical_prices(symbol: str) -> tuple[list[HistoricalPrice], str]:
+    """Fetch timestamped live history with a compatible Binance fallback."""
+    points, source = fetch_historical_prices(symbol, days=30)
+    valid_points = [point for point in points if point.price_usd > 0]
+    if not valid_points:
+        raise APIClientError(f"Historical live data is unavailable for {symbol}.")
+    return valid_points, source
+
+
+def _load_model(symbol: str) -> object | None:
+    """Load an optional LSTM model without surfacing model errors to users."""
     try:
-        prices = clean_prices(client.get_historical_prices(symbol, days=30))
-        if prices:
-            return prices
-    except APIClientError as exc:
-        raise APIClientError(
-            f"Historical live data is unavailable for {symbol}."
-        ) from exc
-    raise APIClientError(f"Historical live data is unavailable for {symbol}.")
+        return load_model(symbol)
+    except Exception as exc:
+        LOGGER.exception("Could not load LSTM model for %s: %s", symbol, exc)
+        return None
 
 
 def _predict_with_lstm(model: object, history: list[float]) -> float:

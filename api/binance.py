@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 from api.base import APIClientError, BaseAPIClient
 from api.coins import COINS_BY_SYMBOL
-from api.types import PriceQuote
+from api.types import HistoricalPrice, PriceQuote
 
 
 BINANCE_USDT_SYMBOLS = {
@@ -55,3 +55,36 @@ class BinanceClient(BaseAPIClient):
         if not quotes:
             raise APIClientError("Binance returned no supported price data.")
         return quotes
+
+    def get_historical_points(
+        self,
+        symbol: str,
+        limit: int = 720,
+    ) -> list[HistoricalPrice]:
+        """Fetch live hourly closing prices for a supported Binance asset."""
+        normalized_symbol = symbol.upper()
+        pair = BINANCE_USDT_SYMBOLS.get(normalized_symbol)
+        if not pair:
+            raise APIClientError(f"Unsupported Binance symbol: {symbol}")
+
+        payload = self.get_json(
+            "/api/v3/klines",
+            {"symbol": pair, "interval": "1h", "limit": min(limit, 1000)},
+        )
+        if not isinstance(payload, list):
+            raise APIClientError("Binance returned an unexpected historical-price payload.")
+
+        points: list[HistoricalPrice] = []
+        for candle in payload:
+            if not isinstance(candle, list) or len(candle) < 7:
+                continue
+            try:
+                timestamp = datetime.fromtimestamp(float(candle[6]) / 1000, tz=timezone.utc)
+                price = float(candle[4])
+            except (TypeError, ValueError, OSError):
+                continue
+            if price > 0:
+                points.append(HistoricalPrice(timestamp=timestamp, price_usd=price))
+        if not points:
+            raise APIClientError("Binance returned no valid historical prices.")
+        return points
