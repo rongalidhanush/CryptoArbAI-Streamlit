@@ -11,7 +11,7 @@ from api.coincap import CoinCapClient
 from api.coingecko import CoinGeckoClient
 from api.coins import coin_name, supported_symbols
 from api.kraken import KrakenClient
-from api.types import PriceQuote
+from api.types import HistoricalPrice, PriceQuote
 from config import get_settings
 
 
@@ -37,6 +37,34 @@ def fetch_exchange_prices(
             LOGGER.info("%s price fetch skipped: %s", client.exchange_name, exc)
 
     return prices_by_exchange
+
+
+def fetch_historical_prices(
+    symbol: str,
+    days: int = 30,
+) -> tuple[list[HistoricalPrice], str]:
+    """Return live timestamped prices using CoinGecko then Binance as backup.
+
+    CoinGecko remains the preferred source because it supplies a 30-day market
+    chart. Binance k-lines provide a compatible live fallback when CoinGecko is
+    rate-limited or temporarily unavailable.
+    """
+    clients = _get_clients()
+    history_errors: list[str] = []
+    for client in clients:
+        if isinstance(client, CoinGeckoClient):
+            try:
+                return client.get_historical_points(symbol, days=days), client.exchange_name
+            except APIClientError as exc:
+                history_errors.append(f"{client.exchange_name}: {exc}")
+        elif isinstance(client, BinanceClient):
+            try:
+                return client.get_historical_points(symbol, limit=days * 24), client.exchange_name
+            except APIClientError as exc:
+                history_errors.append(f"{client.exchange_name}: {exc}")
+
+    detail = "; ".join(history_errors) or "No historical-data client is configured."
+    raise APIClientError(f"Historical live data is unavailable for {symbol}. {detail}")
 
 
 def _get_clients() -> list[BaseAPIClient]:

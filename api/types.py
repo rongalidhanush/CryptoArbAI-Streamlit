@@ -38,3 +38,11 @@ class PriceQuote:
         if self.change_24h is None or self.change_24h >= 0:
             return "positive"
         return "negative"
+
+
+@dataclass(frozen=True)
+class HistoricalPrice:
+    """A timestamped live historical closing price."""
+
+    timestamp: datetime
+    price_usd: float

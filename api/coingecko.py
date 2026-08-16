@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 from api.base import APIClientError, BaseAPIClient
 from api.coins import COINS_BY_SYMBOL
-from api.types import PriceQuote
+from api.types import HistoricalPrice, PriceQuote
 
 
 COINGECKO_IDS = {
@@ -57,8 +57,12 @@ class CoinGeckoClient(BaseAPIClient):
             raise APIClientError("CoinGecko returned no supported price data.")
         return quotes
 
-    def get_historical_prices(self, symbol: str, days: int = 30) -> list[float]:
-        """Fetch historical USD prices for a supported coin symbol."""
+    def get_historical_points(
+        self,
+        symbol: str,
+        days: int = 30,
+    ) -> list[HistoricalPrice]:
+        """Fetch timestamped historical USD prices for a supported coin symbol."""
         normalized_symbol = symbol.upper()
         coin_id = COINGECKO_IDS.get(normalized_symbol)
         if not coin_id:
@@ -72,7 +76,24 @@ class CoinGeckoClient(BaseAPIClient):
         if not isinstance(prices, list) or not prices:
             raise APIClientError("CoinGecko returned no historical prices.")
 
-        return [float(item[1]) for item in prices if len(item) >= 2]
+        points: list[HistoricalPrice] = []
+        for item in prices:
+            if not isinstance(item, list) or len(item) < 2:
+                continue
+            try:
+                timestamp = datetime.fromtimestamp(float(item[0]) / 1000, tz=timezone.utc)
+                price = float(item[1])
+            except (TypeError, ValueError, OSError):
+                continue
+            if price > 0:
+                points.append(HistoricalPrice(timestamp=timestamp, price_usd=price))
+        if not points:
+            raise APIClientError("CoinGecko returned no valid historical prices.")
+        return points
+
+    def get_historical_prices(self, symbol: str, days: int = 30) -> list[float]:
+        """Return historical price values for backwards-compatible callers."""
+        return [point.price_usd for point in self.get_historical_points(symbol, days)]
 
 
 def _optional_float(value: object) -> float | None:

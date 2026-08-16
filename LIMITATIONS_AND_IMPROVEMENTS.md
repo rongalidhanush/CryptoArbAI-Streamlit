@@ -7,5 +7,7 @@
 - Fee schedules are the original static assumptions and should be maintained from
   verified exchange schedules before production trading use.
 - The optional LSTM path needs a trained local model; otherwise prediction uses
-  the existing momentum method and is not financial advice.
-- Use PostgreSQL and a managed secret store for persistent production deployment.
+  the existing momentum method over live CoinGecko history or Binance k-lines.
+  Neither forecast is financial advice.
+- Use PostgreSQL and a managed secret store for persistent production deployment;
+  SQLite cannot preserve accounts and watchlists across redeploys on ephemeral hosts.
